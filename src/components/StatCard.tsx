@@ -8,6 +8,8 @@ interface StatCardProps {
   description: string;
   colorClass: string;
   bgColorClass: string;
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
 export default function StatCard({
@@ -18,11 +20,25 @@ export default function StatCard({
   description,
   colorClass,
   bgColorClass,
+  onClick,
+  isActive = false,
 }: StatCardProps) {
+  const isClickable = !!onClick;
+  
   return (
-    <div
+    <button
       id={id}
-      className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex items-start justify-between transition-all duration-200 hover:shadow-md"
+      onClick={onClick}
+      disabled={!isClickable}
+      className={`text-left w-full bg-white rounded-xl p-5 border shadow-sm flex items-start justify-between transition-all duration-200 select-none ${
+        isClickable 
+          ? 'cursor-pointer hover:shadow-md hover:border-slate-300 active:scale-[0.98]' 
+          : ''
+      } ${
+        isActive 
+          ? 'border-blue-600 ring-2 ring-blue-600/15 bg-blue-50/10' 
+          : 'border-slate-200'
+      }`}
     >
       <div className="flex flex-col gap-1">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{title}</span>
@@ -34,9 +50,9 @@ export default function StatCard({
         </div>
         <p className="text-xs text-slate-550 mt-1.5 leading-snug">{description}</p>
       </div>
-      <div className={`p-2.5 rounded-lg border ${bgColorClass} ${colorClass} shrink-0`}>
+      <div className={`p-2.5 rounded-lg border ${bgColorClass} ${colorClass} shrink-0 ${isActive ? 'scale-110 duration-200' : ''}`}>
         {icon}
       </div>
-    </div>
+    </button>
   );
 }

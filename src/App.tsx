@@ -5,6 +5,7 @@ import MemberCard from './components/MemberCard';
 import MemberDetailModal from './components/MemberDetailModal';
 import AnalyticsSection from './components/AnalyticsSection';
 import StatCard from './components/StatCard';
+import ScrollToTop from './components/ScrollToTop';
 import {
   Award,
   BookOpen,
@@ -37,6 +38,16 @@ export default function App() {
   // Interactive Panel States
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Scroll to results section helper
+  const scrollToResults = () => {
+    setTimeout(() => {
+      const element = document.getElementById('results-count-bar');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 50);
+  };
 
   // Standardize values
   const orgsList = ['전체', '인수위원단', '특별위원단', '자문위원단'];
@@ -131,9 +142,9 @@ export default function App() {
   const totalCount = INITIAL_MEMBERS.length;
   const matchCount = filteredMembers.length;
 
-  const transitionCount = filteredMembers.filter(m => m.organization === '인수위원단').length;
-  const specialCount = filteredMembers.filter(m => m.organization === '특별위원단').length;
-  const advisoryCount = filteredMembers.filter(m => m.organization === '자문위원단').length;
+  const transitionCount = INITIAL_MEMBERS.filter(m => m.organization === '인수위원단').length;
+  const specialCount = INITIAL_MEMBERS.filter(m => m.organization === '특별위원단').length;
+  const advisoryCount = INITIAL_MEMBERS.filter(m => m.organization === '자문위원단').length;
 
   // Reset all filters in one click
   const handleResetFilters = () => {
@@ -192,36 +203,60 @@ export default function App() {
             title="검색 매칭 위원"
             value={matchCount}
             icon={<Check className="w-4 h-4" />}
-            description="현재 설정된 검색에 매치된 인원"
+            description="전체 위원 목록 보기 (검색 기준 유지)"
             colorClass="text-blue-700"
             bgColorClass="bg-blue-50/55 border-blue-105"
+            onClick={() => {
+              setSelectedOrg('전체');
+              setSelectedDept('전체');
+              scrollToResults();
+            }}
+            isActive={selectedOrg === '전체'}
           />
           <StatCard
             id="stat-transition"
             title="인수위원단"
             value={transitionCount}
             icon={<Users className="w-4 h-4" />}
-            description="활동 검토 및 위원 구성 지표"
+            description="클릭 시 인수위원단 필터링 적용"
             colorClass="text-indigo-600"
             bgColorClass="bg-indigo-50/55 border-indigo-105"
+            onClick={() => {
+              setSelectedOrg('인수위원단');
+              setSelectedDept('전체');
+              scrollToResults();
+            }}
+            isActive={selectedOrg === '인수위원단'}
           />
           <StatCard
             id="stat-special"
             title="특별위원단"
             value={specialCount}
             icon={<Building2 className="w-4 h-4" />}
-            description="복지/재정/공동주택 특위 위원"
+            description="클릭 시 특별위원단 필터링 적용"
             colorClass="text-emerald-700"
             bgColorClass="bg-emerald-50/55 border-emerald-105"
+            onClick={() => {
+              setSelectedOrg('특별위원단');
+              setSelectedDept('전체');
+              scrollToResults();
+            }}
+            isActive={selectedOrg === '특별위원단'}
           />
           <StatCard
             id="stat-advisory"
             title="자문위원단"
             value={advisoryCount}
             icon={<Target className="w-4 h-4" />}
-            description="전문 분야 최적 자문 자원"
+            description="클릭 시 자문위원단 필터링 적용"
             colorClass="text-amber-700"
             bgColorClass="bg-amber-50/55 border-amber-105"
+            onClick={() => {
+              setSelectedOrg('자문위원단');
+              setSelectedDept('전체');
+              scrollToResults();
+            }}
+            isActive={selectedOrg === '자문위원단'}
           />
         </section>
 
@@ -452,6 +487,9 @@ export default function App() {
         member={selectedMember}
         onClose={() => setSelectedMember(null)}
       />
+
+      {/* Floating Scroll to Top Button */}
+      <ScrollToTop />
 
       {/* Footer Info */}
       <footer className="bg-slate-800 text-white px-8 py-5 flex flex-col sm:flex-row justify-between items-center gap-4 shrink-0 text-xs mt-16">
