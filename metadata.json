@@ -1,5 +1,5 @@
 {
-  "name": "남양주시 시민주권위원회 인적자원 검색기",
+  "name": "우리동네 남양주 시민주권위원회 만나보기",
   "description": "남양주시 시민주권위원회(인수위원단, 특별위원단, 자문위원단)의 분과별, 직위별 위원명단과 상세 경력을 쉽고 빠르게 조회할 수 있는 고성능 인적자원 검색 플랫폼입니다.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
