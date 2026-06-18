@@ -288,7 +288,7 @@ export default function App() {
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800">남양주시 시민주권위원회 인적자원 검색</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800">우리동네 남양주 시민주권위원회 만나보기</h1>
             <p className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold">Namyangju Citizen Sovereignty Committee Database</p>
           </div>
         </div>
