@@ -7,6 +7,7 @@ import AnalyticsSection from './components/AnalyticsSection';
 import StatCard from './components/StatCard';
 import ScrollToTop from './components/ScrollToTop';
 import {
+  ArrowUpDown,
   Award,
   BookOpen,
   Briefcase,
@@ -22,6 +23,14 @@ import {
   Target,
   TrendingDown,
   Users,
+  Scale,
+  TrendingUp,
+  Leaf,
+  GraduationCap,
+  Coins,
+  Home,
+  HelpCircle,
+  Filter,
 } from 'lucide-react';
 
 export default function App() {
@@ -34,6 +43,7 @@ export default function App() {
   const [selectedOrg, setSelectedOrg] = useState<string>('전체');
   const [selectedDept, setSelectedDept] = useState<string>('전체');
   const [selectedPosition, setSelectedPosition] = useState<string>('전체');
+  const [sortOrder, setSortOrder] = useState<'none' | 'asc' | 'desc'>('none');
 
   // Interactive Panel States
   const [showAnalytics, setShowAnalytics] = useState(true);
@@ -63,6 +73,103 @@ export default function App() {
     '해당없음'
   ];
 
+  // Dynamic department counts derived once
+  const departmentCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    deptsList.forEach(dept => {
+      counts[dept] = INITIAL_MEMBERS.filter(m => m.department === dept).length;
+    });
+    return counts;
+  }, [deptsList]);
+
+  // Handle department click with auto-synchronization of organization
+  const selectDeptWithSync = (dept: string) => {
+    setSelectedDept(dept);
+    if (dept === '전체') {
+      setSelectedOrg('전체');
+    } else if (['기획자치분과', '미래경제분과', '도시교통환경분과', '복지문화교육분과'].includes(dept)) {
+      if (selectedOrg !== '전체' && selectedOrg !== '인수위원단') {
+        setSelectedOrg('인수위원단');
+      }
+    } else if (['재정혁신특위', '공동주택 관리비 특위'].includes(dept)) {
+      if (selectedOrg !== '전체' && selectedOrg !== '특별위원단') {
+        setSelectedOrg('특별위원단');
+      }
+    } else if (dept === '해당없음') {
+      if (selectedOrg !== '전체' && selectedOrg !== '자문위원단' && selectedOrg !== '인수위원단') {
+        setSelectedOrg('전체');
+      }
+    }
+    scrollToResults();
+  };
+
+  const deptOptions = [
+    {
+      name: '전체',
+      label: '전체 보기',
+      subLabel: '일괄 조회',
+      icon: Filter,
+      colorClass: 'hover:bg-slate-50 border-slate-200 text-slate-700',
+      activeClass: 'bg-slate-900 border-slate-900 text-white shadow-sm ring-2 ring-slate-900/10'
+    },
+    {
+      name: '기획자치분과',
+      label: '기획자치',
+      subLabel: '인수분과',
+      icon: Scale,
+      colorClass: 'hover:bg-indigo-50/45 border-indigo-100 text-indigo-900',
+      activeClass: 'bg-indigo-700 border-indigo-700 text-white shadow-md shadow-indigo-100 ring-2 ring-indigo-700/10'
+    },
+    {
+      name: '미래경제분과',
+      label: '미래경제',
+      subLabel: '인수분과',
+      icon: TrendingUp,
+      colorClass: 'hover:bg-blue-50/45 border-blue-100 text-blue-900',
+      activeClass: 'bg-blue-700 border-blue-700 text-white shadow-md shadow-blue-100 ring-2 ring-blue-700/10'
+    },
+    {
+      name: '도시교통환경분과',
+      label: '도시교통',
+      subLabel: '인수분과',
+      icon: Leaf,
+      colorClass: 'hover:bg-emerald-50/45 border-emerald-100 text-emerald-900',
+      activeClass: 'bg-emerald-700 border-emerald-700 text-white shadow-md shadow-emerald-100 ring-2 ring-emerald-700/10'
+    },
+    {
+      name: '복지문화교육분과',
+      label: '복지문화',
+      subLabel: '인수분과',
+      icon: GraduationCap,
+      colorClass: 'hover:bg-purple-50/45 border-purple-100 text-purple-900',
+      activeClass: 'bg-purple-700 border-purple-700 text-white shadow-md shadow-purple-100 ring-2 ring-purple-700/10'
+    },
+    {
+      name: '재정혁신특위',
+      label: '재정혁신',
+      subLabel: '특별위원회',
+      icon: Coins,
+      colorClass: 'hover:bg-amber-50/45 border-amber-100 text-amber-900',
+      activeClass: 'bg-amber-700 border-amber-700 text-white shadow-md shadow-amber-100 ring-2 ring-amber-700/10'
+    },
+    {
+      name: '공동주택 관리비 특위',
+      label: '공동주택',
+      subLabel: '특별위원회',
+      icon: Home,
+      colorClass: 'hover:bg-cyan-50/45 border-cyan-100 text-cyan-950',
+      activeClass: 'bg-cyan-700 border-cyan-700 text-white shadow-md shadow-cyan-100 ring-2 ring-cyan-700/10'
+    },
+    {
+      name: '해당없음',
+      label: '자문/기타',
+      subLabel: '해당없음',
+      icon: HelpCircle,
+      colorClass: 'hover:bg-slate-50 border-slate-200 text-slate-700',
+      activeClass: 'bg-slate-700 border-slate-700 text-white shadow-md shadow-slate-100 ring-2 ring-slate-700/10'
+    }
+  ];
+
   const positionsList = [
     '전체',
     '위원장(부위원장 포함)',
@@ -86,9 +193,9 @@ export default function App() {
     '분석'
   ];
 
-  // Primary filtering logic
+  // Primary filtering and sorting logic
   const filteredMembers = useMemo(() => {
-    return members.filter(member => {
+    const filtered = members.filter(member => {
       // 1. Name search (case-insensitive & space trimmed)
       if (searchQuery.trim()) {
         const nameMatch = member.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
@@ -136,7 +243,16 @@ export default function App() {
 
       return true;
     });
-  }, [members, searchQuery, keywordQuery, selectedOrg, selectedDept, selectedPosition]);
+
+    // Apply sorting
+    if (sortOrder === 'asc') {
+      return [...filtered].sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+    }
+    if (sortOrder === 'desc') {
+      return [...filtered].sort((a, b) => b.name.localeCompare(a.name, 'ko'));
+    }
+    return filtered;
+  }, [members, searchQuery, keywordQuery, selectedOrg, selectedDept, selectedPosition, sortOrder]);
 
   // Statistics calculation for dynamic counts
   const totalCount = INITIAL_MEMBERS.length;
@@ -153,6 +269,7 @@ export default function App() {
     setSelectedOrg('전체');
     setSelectedDept('전체');
     setSelectedPosition('전체');
+    setSortOrder('none');
   };
 
   // Quick select category
@@ -260,19 +377,6 @@ export default function App() {
           />
         </section>
 
-        {/* Analytics Interactive Panel */}
-        {showAnalytics && (
-          <section id="analytics-panel" className="animate-fade-in">
-            <div className="flex items-center gap-2 mb-3 justify-between">
-              <span className="text-xs font-bold tracking-wider text-slate-450 uppercase flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-blue-600" />
-                인력구성 비율 및 실시간 현황 통계
-              </span>
-            </div>
-            <AnalyticsSection members={filteredMembers} />
-          </section>
-        )}
-
         {/* Search Control Dashboard - Professional Polish styled wrapper */}
         <section id="search-controls" className="bg-white rounded-xl p-6 md:p-8 border border-slate-200 shadow-sm flex flex-col gap-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-100">
@@ -291,7 +395,7 @@ export default function App() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
             {/* Left Col: Name search & suggestions */}
             <div className="flex flex-col gap-2">
@@ -354,10 +458,31 @@ export default function App() {
               </div>
             </div>
 
+            {/* Sort Col: Name sorting option */}
+            <div className="flex flex-col gap-2">
+              <label htmlFor="filter-sort-select" className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                <ArrowUpDown className="w-3.5 h-3.5 text-blue-600" />
+                성명 정렬 순서
+              </label>
+              <div className="relative">
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-550 pointer-events-none" />
+                <select
+                  id="filter-sort-select"
+                  value={sortOrder}
+                  onChange={e => setSortOrder(e.target.value as 'none' | 'asc' | 'desc')}
+                  className="w-full appearance-none pl-4 pr-10 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 rounded-lg text-sm font-medium transition-all focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="none">기본 정렬 (고유 순번)</option>
+                  <option value="asc">성명 오름차순 (ㄱ - ㅎ)</option>
+                  <option value="desc">성명 내림차순 (ㅎ - ㄱ)</option>
+                </select>
+              </div>
+            </div>
+
           </div>
 
           {/* Org & Dept selector grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+          <div className="flex flex-col gap-5 pt-4 border-t border-slate-100">
             {/* Org select tabs */}
             <div className="flex flex-col gap-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">1단계: 조직 대분류 선택</span>
@@ -368,7 +493,18 @@ export default function App() {
                     <button
                       key={org}
                       id={`tab-org-${org}`}
-                      onClick={() => setSelectedOrg(org === '전체' ? '전체' : org as OrganizationType)}
+                      onClick={() => {
+                        setSelectedOrg(org === '전체' ? '전체' : org as OrganizationType);
+                        // Custom behavior: if user specifically filters for an organization, reset department unless compatible
+                        if (org === '인수위원단' && !['기획자치분과', '미래경제분과', '도시교통환경분과', '복지문화교육분과', '해당없음'].includes(selectedDept)) {
+                          setSelectedDept('전체');
+                        } else if (org === '특별위원단' && !['재정혁신특위', '공동주택 관리비 특위'].includes(selectedDept)) {
+                          setSelectedDept('전체');
+                        } else if (org === '자문위원단' && selectedDept !== '해당없음') {
+                          setSelectedDept('해당없음');
+                        }
+                        scrollToResults();
+                      }}
                       className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border ${
                         isActive
                           ? 'bg-blue-700 border-blue-700 text-white shadow-sm'
@@ -383,31 +519,55 @@ export default function App() {
             </div>
 
             {/* Dept selector */}
-            <div className="flex flex-col gap-2">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">2단계: 해당 분과 / 특위 선택</span>
-              <div className="relative">
-                <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                <select
-                  id="filter-department-select"
-                  value={selectedDept}
-                  onChange={e => setSelectedDept(e.target.value)}
-                  className="w-full appearance-none pl-4 pr-10 py-2 bg-slate-50 hover:bg-slate-100/70 focus:bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 transition-all focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="전체">전체 분과 / 특위 일괄 조회</option>
-                  <optgroup label="정규 분과위원회">
-                    <option value="기획자치분과">기획자치분과</option>
-                    <option value="미래경제분과">미래경제분과</option>
-                    <option value="도시교통환경분과">도시교통환경분과</option>
-                    <option value="복지문화교육분과">복지문화교육분과</option>
-                  </optgroup>
-                  <optgroup label="특별 소위원회">
-                    <option value="재정혁신특위">재정혁신특위</option>
-                    <option value="공동주택 관리비 특위">공동주택 관리비 특위</option>
-                  </optgroup>
-                  <optgroup label="기타 자문단">
-                    <option value="해당없음">해당없음 / 규제혁파 등</option>
-                  </optgroup>
-                </select>
+            <div className="flex flex-col gap-2.5">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-blue-600" />
+                2단계: 분과 및 특별위원회 빠른 가로 선택 및 통계 (클릭 시 자동 조직 연동)
+              </span>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8 gap-2.5">
+                {deptOptions.map((opt) => {
+                  const isActive = selectedDept === opt.name;
+                  const IconComponent = opt.icon;
+                  const count = departmentCounts[opt.name];
+                  
+                  return (
+                    <button
+                      key={opt.name}
+                      type="button"
+                      onClick={() => selectDeptWithSync(opt.name)}
+                      className={`flex flex-col justify-between p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group hover:shadow-xs ${
+                        isActive ? opt.activeClass : `bg-white border-slate-200 text-slate-800 ${opt.colorClass}`
+                      }`}
+                    >
+                      <div className="flex justify-between items-start w-full gap-2 mb-2">
+                        <div className={`p-1.5 rounded-lg transition-all ${
+                          isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600 group-hover:bg-white'
+                        }`}>
+                          <IconComponent className="w-3.5 h-3.5" />
+                        </div>
+                        
+                        <span className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase tracking-wider shrink-0 ${
+                          isActive 
+                            ? 'bg-white/25 text-white' 
+                            : 'bg-slate-100/90 text-slate-400'
+                        }`}>
+                          {opt.subLabel}
+                        </span>
+                      </div>
+
+                      <div className="mt-1">
+                        <span className="text-xs font-bold block truncate tracking-tight">{opt.label}</span>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <span className={`text-[9px] ${isActive ? 'text-white/80' : 'text-slate-400'}`}>정원:</span>
+                          <span className={`text-[10px] font-extrabold ${isActive ? 'text-white' : 'text-slate-700'}`}>
+                            {count !== undefined ? `${count}명` : '0명'}
+                          </span>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -434,6 +594,19 @@ export default function App() {
           </div>
 
         </section>
+
+        {/* Analytics Interactive Panel */}
+        {showAnalytics && (
+          <section id="analytics-panel" className="animate-fade-in">
+            <div className="flex items-center gap-2 mb-3 justify-between">
+              <span className="text-xs font-bold tracking-wider text-slate-450 uppercase flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-blue-600" />
+                인력구성 비율 및 실시간 현황 통계
+              </span>
+            </div>
+            <AnalyticsSection members={filteredMembers} />
+          </section>
+        )}
 
         {/* Results Info Bar */}
         <div id="results-count-bar" className="flex justify-between items-center bg-white py-3.5 px-6 rounded-lg border border-slate-200 text-xs text-slate-500">
