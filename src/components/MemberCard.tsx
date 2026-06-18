@@ -31,7 +31,7 @@ export default function MemberCard({
 
   const searchWords = getSearchWords();
 
-  const highlight = (text: string) => {
+  const highlight = (text: string, isCareer: boolean = false) => {
     if (!searchWords.length || !text) return <span>{text}</span>;
     
     // Escaping regex tokens
@@ -48,7 +48,14 @@ export default function MemberCard({
       <>
         {parts.map((part, i) =>
           pattern.test(part) ? (
-            <mark key={i} className="bg-emerald-100 text-emerald-950 px-0.5 rounded-sm font-semibold">
+            <mark
+              key={i}
+              className={`${
+                isCareer
+                  ? 'bg-yellow-100 text-yellow-900 border border-yellow-250/50'
+                  : 'bg-emerald-100 text-emerald-950'
+              } px-0.5 rounded-sm font-semibold`}
+            >
               {part}
             </mark>
           ) : (
@@ -122,7 +129,7 @@ export default function MemberCard({
             {member.careers.map((career, index) => (
               <li key={index} className="flex items-start gap-1">
                 <span className="text-slate-400 shrink-0 select-none">•</span>
-                <span className="break-all">{highlight(career)}</span>
+                <span className="break-all">{highlight(career, true)}</span>
               </li>
             ))}
           </ul>

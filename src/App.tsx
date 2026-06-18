@@ -495,14 +495,7 @@ export default function App() {
                       id={`tab-org-${org}`}
                       onClick={() => {
                         setSelectedOrg(org === '전체' ? '전체' : org as OrganizationType);
-                        // Custom behavior: if user specifically filters for an organization, reset department unless compatible
-                        if (org === '인수위원단' && !['기획자치분과', '미래경제분과', '도시교통환경분과', '복지문화교육분과', '해당없음'].includes(selectedDept)) {
-                          setSelectedDept('전체');
-                        } else if (org === '특별위원단' && !['재정혁신특위', '공동주택 관리비 특위'].includes(selectedDept)) {
-                          setSelectedDept('전체');
-                        } else if (org === '자문위원단' && selectedDept !== '해당없음') {
-                          setSelectedDept('해당없음');
-                        }
+                        setSelectedDept('전체');
                         scrollToResults();
                       }}
                       className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all border ${
